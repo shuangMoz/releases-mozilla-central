@@ -21,11 +21,12 @@ public:
 
   static BluetoothHfpManager* Get();
   void ReceiveSocketData(mozilla::ipc::SocketRawData* aMessage);
-
   bool Connect(const nsAString& aDeviceObjectPath,
                BluetoothReplyRunnable* aRunnable);
   bool Disconnect(BluetoothReplyRunnable* aRunnable);
   void SendLine(const char* aMessage);
+  void CallStateChanged(int aCallIndex, int aCallState,
+                        const char* aNumber, bool aIsActive);
 
 private:
   BluetoothHfpManager();

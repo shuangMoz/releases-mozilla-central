@@ -173,3 +173,9 @@ BluetoothHfpManager::SendLine(const char* aMessage)
   SendSocketData(new mozilla::ipc::SocketRawData(msg.get()));
 }
 
+void
+BluetoothHfpManager::CallStateChanged(int aCallIndex, int aCallState,
+                                      const char* aNumber, bool aIsActive)
+{
+
+}
