@@ -10,7 +10,7 @@ VPATH = @srcdir@
 include $(DEPTH)/config/autoconf.mk
 
 MODULE = ipc
-LIBRARY_NAME = mozipcsocket_s
+LIBRARY_NAME = mozipcunixsocket_s
 FORCE_STATIC_LIB = 1
 LIBXUL_LIBRARY = 1
 EXPORT_LIBRARY = 1
@@ -18,11 +18,11 @@ EXPORT_LIBRARY = 1
 EXPORTS_NAMESPACES = mozilla/ipc
 
 EXPORTS_mozilla/ipc = \
-  Socket.h \
+	UnixSocket.h \
   $(NULL)
 
 CPPSRCS += \
-  Socket.cpp \
+	UnixSocket.cpp \
   $(NULL)
 
 include $(topsrcdir)/config/config.mk

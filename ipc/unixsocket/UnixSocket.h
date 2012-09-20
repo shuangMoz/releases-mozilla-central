@@ -4,17 +4,71 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_ipc_Socket_h
-#define mozilla_ipc_Socket_h
+#ifndef mozilla_ipc_UnixSocket_h
+#define mozilla_ipc_UnixSocket_h
+
+#include <stdlib.h>
+#include "nsString.h"
+#include "nsAutoPtr.h"
+#include "mozilla/RefPtr.h"
 
 namespace mozilla {
 namespace ipc {
 
-int
-GetNewSocket(int type, const char* aAddress, int channel, bool auth, bool encrypt);
+struct UnixSocketRawData
+{
+  static const size_t MAX_DATA_SIZE = 1024;
+  uint8_t mData[MAX_DATA_SIZE];
 
-int
-CloseSocket(int aFd);
+  // Number of octets in mData.
+  size_t mSize;
+  size_t mCurrentWriteOffset;
+
+  UnixSocketRawData() :
+    mSize(0),
+    mCurrentWriteOffset(0)
+  {
+  }
+
+};
+
+class UnixSocketImpl;
+
+class UnixSocketConnector
+{
+public:
+  UnixSocketConnector()
+  {
+
+  }
+  virtual ~UnixSocketConnector()
+  {
+
+  }
+  virtual int Create() = 0;
+  virtual bool Connect(int aFd, const char* aAddress) = 0;
+protected:
+  bool Prepare(int aFd);
+};
+
+class UnixSocketConsumer : public RefCounted<UnixSocketConsumer>
+{
+public:
+  UnixSocketConsumer()
+  {}
+  virtual ~UnixSocketConsumer()
+  {
+  }
+  virtual void ReceiveSocketData(UnixSocketRawData* aMessage) = 0;
+  bool SendSocketData(UnixSocketRawData* aMessage);
+  bool SendSocketData(const nsAString& aMessage);
+  bool SendSocketData(const nsACString& aMessage);
+  bool ConnectSocket(UnixSocketConnector& aConnector, const char* aAddress);
+  void CloseSocket();
+  bool IsSocketOpen();
+private:
+  UnixSocketImpl* mImpl;
+};
 
 } // namespace ipc
 } // namepsace mozilla
