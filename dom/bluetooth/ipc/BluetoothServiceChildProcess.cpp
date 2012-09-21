@@ -270,6 +270,26 @@ BluetoothServiceChildProcess::SetAuthorizationInternal(
 }
 
 nsresult
+BluetoothServiceChildProcess::ConnectHeadset(const nsAString& aDeviceObjectPath,
+                                             BluetoothReplyRunnable* aRunnable)
+{
+  SendRequest(aRunnable,
+              ConnectHeadsetRequest(nsString(aDeviceObjectPath)));
+
+  return NS_OK;
+}
+
+nsresult
+BluetoothServiceChildProcess::DisconnectHeadset(const nsAString& aDeviceObjectPath,
+                                                BluetoothReplyRunnable* aRunnable)
+{
+  SendRequest(aRunnable,
+              DisconnectHeadsetRequest(nsString(aDeviceObjectPath)));
+
+  return NS_OK;
+}
+
+nsresult
 BluetoothServiceChildProcess::PrepareAdapterInternal(const nsAString& aPath)
 {
   MOZ_NOT_REACHED("Should never be called from child");

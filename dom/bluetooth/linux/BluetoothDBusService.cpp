@@ -18,6 +18,7 @@
 
 #include "base/basictypes.h"
 #include "BluetoothDBusService.h"
+#include "BluetoothHfpManager.h"
 #include "BluetoothServiceUuid.h"
 #include "BluetoothReplyRunnable.h"
 #include "BluetoothUnixSocketConnector.h"
@@ -2224,3 +2225,22 @@ BluetoothDBusService::GetSocketViaService(const nsAString& aObjectPath,
   return NS_OK;
 }
 
+nsresult
+BluetoothDBusService::ConnectHeadset(const nsAString& aObjectPath, 
+                                     BluetoothReplyRunnable* aRunnable)
+{
+  BluetoothHfpManager* hfp = BluetoothHfpManager::Get();
+  bool result = hfp->Connect(aObjectPath, aRunnable);
+
+  return result ? NS_OK : NS_ERROR_FAILURE;
+}
+
+nsresult
+BluetoothDBusService::DisconnectHeadset(const nsAString& aObjectPath, 
+                                        BluetoothReplyRunnable* aRunnable)
+{
+  BluetoothHfpManager* hfp = BluetoothHfpManager::Get();
+  bool result = hfp->Disconnect(aRunnable);
+
+  return result ? NS_OK : NS_ERROR_FAILURE;
+}
