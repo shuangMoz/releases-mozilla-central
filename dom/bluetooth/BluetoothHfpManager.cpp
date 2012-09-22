@@ -70,7 +70,7 @@ BluetoothHfpManager::Get()
 
 // Virtual function of class SocketConsumer
 void
-BluetoothHfpManager::ReceiveSocketData(mozilla::ipc::SocketRawData* aMessage)
+BluetoothHfpManager::ReceiveSocketData(mozilla::ipc::UnixSocketRawData* aMessage)
 {
   const char* msg = (const char*)aMessage->mData;
 
@@ -178,17 +178,22 @@ BluetoothHfpManager::Disconnect(BluetoothReplyRunnable* aRunnable)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  BluetoothService* bs = BluetoothService::Get();
-  if (!bs) {
-    NS_WARNING("BluetoothService not available!");
-    return false;
+  // BluetoothService* bs = BluetoothService::Get();
+  // if (!bs) {
+  //   NS_WARNING("BluetoothService not available!");
+  //   return false;
+  // }
+
+  // nsRefPtr<BluetoothReplyRunnable> runnable = aRunnable;
+
+  nsresult rv = NS_OK;
+  // nsresult rv = bs->CloseSocket(this, runnable);
+  // runnable.forget();
+
+  int err;
+  if(!CloseSocket(err)) {
+    NS_WARNING("Cannot close socket!");
   }
-
-  nsRefPtr<BluetoothReplyRunnable> runnable = aRunnable;
-
-  nsresult rv = bs->CloseSocket(this, runnable);
-  runnable.forget();
-
   return NS_FAILED(rv) ? false : true;
 }
 
@@ -202,7 +207,7 @@ BluetoothHfpManager::SendLine(const char* aMessage)
   msg += aMessage;
   msg += kHfpCrlf;
 
-  SendSocketData(new mozilla::ipc::SocketRawData(msg.get()));
+  SendSocketData(msg);
 }
 
 /*
