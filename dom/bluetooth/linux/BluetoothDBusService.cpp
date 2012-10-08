@@ -768,15 +768,39 @@ public:
 
     uuids.AppendElement((uint32_t)(BluetoothServiceUuid::HandsfreeAG >> 32));
     uuids.AppendElement((uint32_t)(BluetoothServiceUuid::HeadsetAG >> 32));
+    uuids.AppendElement((uint32_t)(BluetoothServiceUuid::ObjectPush >> 32));
 
     sServiceHandles.Clear();
-    if (!BluetoothDBusService::AddReservedServicesInternal(mPath, uuids, sServiceHandles)) {
+    if (!BluetoothDBusService::AddReservedServicesInternal(mPath,
+                                                           uuids,
+                                                           sServiceHandles)) {
       NS_WARNING("Failed to add reserved services");
       return NS_ERROR_FAILURE;
     }
 
     if(!RegisterAgent(mPath)) {
       NS_WARNING("Failed to register agent");
+      return NS_ERROR_FAILURE;
+    }
+
+    BluetoothUnixSocketConnector* c =
+      new BluetoothUnixSocketConnector(BluetoothSocketType::RFCOMM,
+                                       BluetoothReservedChannels::HANDSFREE_AG,
+                                       true, false);
+
+    BluetoothHfpManager* hfp = BluetoothHfpManager::Get();
+    if (!hfp->ListenSocket(c)) {
+      NS_WARNING("Can't listen on socket!");
+      return NS_ERROR_FAILURE;
+    }
+
+    c = new BluetoothUnixSocketConnector(BluetoothSocketType::RFCOMM,
+                                         BluetoothReservedChannels::OPUSH,
+                                         true, false);
+
+    BluetoothOppManager* opp = BluetoothOppManager::Get();
+    if (!opp->ListenSocket(c2)) {
+      NS_WARNING("Can't listen on socket!");
       return NS_ERROR_FAILURE;
     }
 
