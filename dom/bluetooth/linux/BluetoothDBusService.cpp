@@ -1698,6 +1698,12 @@ public:
 
     BluetoothValue values = InfallibleTArray<BluetoothNamedValue>();
 
+    LOG("DeviceAddresses length: %d", mDeviceAddresses.Length());
+
+    for (int i = 0; i < mDeviceAddresses.Length(); i++) {
+      LOG("DeviceAddresses[%d]:%s", i, NS_ConvertUTF16toUTF8(mDeviceAddresses[i]).get());
+    }
+
     for (int i = 0; i < mDeviceAddresses.Length(); i++) {
       BluetoothValue v;
       if (!GetPropertiesInternal(mDeviceAddresses[i], DBUS_DEVICE_IFACE, v)) {
