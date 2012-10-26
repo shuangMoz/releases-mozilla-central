@@ -431,6 +431,7 @@ BluetoothOppManager::ReceiveSocketData(UnixSocketRawData* aMessage)
 
         // Use timestamp as a part of the filename. If the name still
         // conflicts with an existing file, just return an error.
+        /*
         PRExplodedTime now;
         PR_ExplodeTime(PR_Now(), PR_LocalTimeParameters, &now);
 
@@ -449,10 +450,11 @@ BluetoothOppManager::ReceiveSocketData(UnixSocketRawData* aMessage)
         sFileName.StripChars("/: ");
         sFileName += '-';
         sFileName += tempFileName;
+        */
 
-        path += sFileName;
+        path += tempFileName;
 
-        rv = NS_NewLocalFile(path, false, getter_AddRefs(mFile));
+        nsresult rv = NS_NewLocalFile(path, false, getter_AddRefs(mFile));
         if (NS_FAILED(rv)) {
           NS_WARNING("Couldn't new a local file");
         }
@@ -463,7 +465,8 @@ BluetoothOppManager::ReceiveSocketData(UnixSocketRawData* aMessage)
           NS_WARNING("The file already exists");
         }
 
-        rv = mFile->Create(nsIFile::NORMAL_FILE_TYPE, 00644);
+        rv = mFile->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 00644);
+//        rv = mFile->Create(nsIFile::NORMAL_FILE_TYPE, 00644);
         if (NS_FAILED(rv)) {
           NS_WARNING("Couldn't create the file");
         }
