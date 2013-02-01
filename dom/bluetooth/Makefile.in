@@ -96,12 +96,14 @@ DEFINES += -DMOZ_BLUETOOTH_DBUS
 endif
 endif
 
+LOCAL_INCLUDES += \
+	-I$(topsrcdir)/media/libsydneyaudio/src \
+	-I$(ANDROID_SOURCE)/frameworks/base/include
 # Add VPATH to LOCAL_INCLUDES so we are going to include the correct backend
 # subdirectory.
 LOCAL_INCLUDES += $(VPATH:%=-I%)
 
 endif # MOZ_B2G_BT
-
 include $(topsrcdir)/config/config.mk
 include $(topsrcdir)/ipc/chromium/chromium-config.mk
 include $(topsrcdir)/config/rules.mk

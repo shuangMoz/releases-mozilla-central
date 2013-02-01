@@ -30,6 +30,8 @@ public:
                BluetoothReplyRunnable* aRunnable);
   bool Listen();
   void GetConnectedSinkAddress(nsAString& aDeviceAddress);
+  void ResetAudio();
+
 private:
   BluetoothA2dpManager();
   bool Init();

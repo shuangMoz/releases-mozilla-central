@@ -842,6 +842,10 @@ public:
       sco->CloseSocket();
     }
 
+    BluetoothA2dpManager* a2dp = BluetoothA2dpManager::Get();
+    if (a2dp) {
+      a2dp->ResetAudio();
+    }
     return NS_OK;
   }
 };
@@ -2513,7 +2517,6 @@ BluetoothDBusService::Disconnect(const uint16_t aProfileId,
     nsString currentAddr;
     a2dp->GetConnectedSinkAddress(currentAddr);
     a2dp->Disconnect(currentAddr, aRunnable);
-
   } else {
     NS_WARNING("Unknown profile");
     return;
@@ -2982,7 +2985,6 @@ BluetoothDBusService::VolumeDown(const nsAString& aDeviceObjectPath,
     NS_WARNING("Could not start async function!");
     return NS_ERROR_FAILURE;
   }
-
   return ret;
 }
 

@@ -5,19 +5,18 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "base/basictypes.h"
-
+#include <utils/String8.h>
 #include "BluetoothA2dpManager.h"
-
 #include "BluetoothReplyRunnable.h"
 #include "BluetoothService.h"
 #include "BluetoothUtils.h"
-
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "nsContentUtils.h"
 #include "nsIAudioManager.h"
 #include "nsIObserverService.h"
+#include "gonk/AudioSystem.h"
 
 #undef LOG
 #if defined(MOZ_WIDGET_GONK)
@@ -77,6 +76,28 @@ BluetoothA2dpManager::Get()
   return gBluetoothA2dpManager;
 }
 
+static void
+SetParameter(const nsAString& aParameter)
+{
+  android::String8 cmd;
+  cmd.appendFormat(NS_ConvertUTF16toUTF8(aParameter).get());
+  android::AudioSystem::setParameters(0, cmd);
+}
+
+static void
+MakeA2dpDeviceAvailableNow(const nsAString& aBdAddress)
+{
+  android::AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_BLUETOOTH_A2DP,
+                        AUDIO_POLICY_DEVICE_STATE_AVAILABLE, NS_ConvertUTF16toUTF8(aBdAddress).get());
+}
+
+static void
+MakeA2dpDeviceUnavailableNow(const nsAString& aBdAddress)
+{
+  android::AudioSystem::setDeviceConnectionState(AUDIO_DEVICE_OUT_BLUETOOTH_A2DP,
+                        AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE, NS_ConvertUTF16toUTF8(aBdAddress).get());
+}
+
 // Virtual function of class SocketConsumer
 void
 BluetoothA2dpManager::ReceiveSocketData(mozilla::ipc::UnixSocketRawData* aMessage)
@@ -97,11 +118,14 @@ BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
     LOG("Couldn't get BluetoothService");
     return false;
   }
-
+  mCurrentAddress = aDeviceAddress;
   // TODO(Eric)
   // Please decide what should be passed into function ConnectSink()
   bs->ConnectSink(aDeviceAddress, aRunnable);
-
+  LOG("Address: %s", NS_ConvertUTF16toUTF8(GetAddressFromObjectPath(mCurrentAddress)).get());
+  SetParameter(NS_LITERAL_STRING("bluetooth_enabled=true"));
+  SetParameter(NS_LITERAL_STRING("A2dpSuspended=false"));
+  MakeA2dpDeviceAvailableNow(GetAddressFromObjectPath(mCurrentAddress));
   return true;
 }
 
@@ -117,6 +141,14 @@ BluetoothA2dpManager::Listen()
 }
 
 void
+BluetoothA2dpManager::ResetAudio()
+{
+  SetParameter(NS_LITERAL_STRING("bluetooth_enabled=false"));
+  SetParameter(NS_LITERAL_STRING("A2dpSuspended=true"));
+  MakeA2dpDeviceUnavailableNow(GetAddressFromObjectPath(mCurrentAddress));
+}
+
+void
 BluetoothA2dpManager::Disconnect(const nsAString& aDeviceAddress,
                                 BluetoothReplyRunnable* aRunnable)
 {
@@ -125,8 +157,13 @@ BluetoothA2dpManager::Disconnect(const nsAString& aDeviceAddress,
     LOG("Couldn't get BluetoothService");
     return;
   }
-
+  // DisconnectSink actually send Close stream first
   bs->DisconnectSink(aDeviceAddress, aRunnable);
+  LOG("Address: %s", NS_ConvertUTF16toUTF8(GetAddressFromObjectPath(mCurrentAddress)).get());
+  SetParameter(NS_LITERAL_STRING("bluetooth_enabled=true"));
+  SetParameter(NS_LITERAL_STRING("A2dpSuspended=true"));
+  MakeA2dpDeviceUnavailableNow(GetAddressFromObjectPath(mCurrentAddress));
+
 }
 
 void BluetoothA2dpManager::GetConnectedSinkAddress(nsAString& aDeviceAddress)
