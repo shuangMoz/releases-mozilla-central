@@ -162,8 +162,20 @@ public:
                        BluetoothReplyRunnable* aRunnable);
 
   // =========== A2DP ===========
-  virtual bool ConnectSink();
-  virtual bool DisconnectSink();
+  virtual bool GetSinkProperties(const nsAString& aDeviceAddress,
+                  BluetoothReplyRunnable* aRunnable);
+  virtual bool ConnectSink(const nsAString& aDeviceAddress,
+                  BluetoothReplyRunnable* aRunnable);
+  virtual bool DisconnectSink(const nsAString& aDeviceAddress,
+                  BluetoothReplyRunnable* aRunnable);
+  virtual bool SuspendSink(const nsAString& aDeviceAddress,
+                  BluetoothReplyRunnable* aRunnable);
+  virtual bool ResumeSink(const nsAString& aDeviceAddress,
+                  BluetoothReplyRunnable* aRunnable);
+  virtual bool VolumeUp(const nsAString& aDeviceAddress,
+                  BluetoothReplyRunnable* aRunnable);
+  virtual bool VolumeDown(const nsAString& aDeviceAddress,
+                  BluetoothReplyRunnable* aRunnable);
 
 private:
   nsresult SendGetPropertyMessage(const nsAString& aPath,

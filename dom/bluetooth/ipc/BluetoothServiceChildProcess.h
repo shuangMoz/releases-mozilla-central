@@ -158,8 +158,10 @@ public:
                        BluetoothReplyRunnable* aRunnable) MOZ_OVERRIDE;
 
   // ================ A2DP ================
-  virtual bool ConnectSink() MOZ_OVERRIDE;
-  virtual bool DisconnectSink() MOZ_OVERRIDE;
+  virtual bool ConnectSink(const nsAString& aDeviceAddress,
+                      BluetoothReplyRunnable* aRunnable) MOZ_OVERRIDE;
+  virtual bool DisconnectSink(const nsAString& aDeviceAddress,
+                      BluetoothReplyRunnable* aRunnable) MOZ_OVERRIDE;
 
 protected:
   BluetoothServiceChildProcess();

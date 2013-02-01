@@ -45,6 +45,9 @@
 
 #define DEFAULT_SHUTDOWN_TIMER_MS 5000
 
+#include <android/log.h>
+#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "GonkDBus", args);
+
 using namespace mozilla;
 using namespace mozilla::dom;
 USING_BLUETOOTH_NAMESPACE
@@ -764,6 +767,8 @@ BluetoothService::Notify(const BluetoothSignal& aData)
   } else if (aData.name().EqualsLiteral("PairedStatusChanged")) {
     NS_ASSERTION(arr.Length() == 1, "PairedStatusChagned: Wrong length of parameters");
     type.AssignLiteral("bluetooth-pairedstatuschanged");
+  } else if(aData.name().EqualsLiteral("A2dpConnStatusChanged")) {
+    type.AssignLiteral("bluetooth-a2dp-status-changed");
   } else {
 #ifdef DEBUG
     nsCString warningMsg;

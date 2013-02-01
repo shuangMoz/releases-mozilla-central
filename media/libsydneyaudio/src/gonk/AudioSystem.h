@@ -229,8 +229,8 @@ typedef enum {
     /* output devices */      
     AUDIO_DEVICE_OUT_EARPIECE                  = 0x1,
     AUDIO_DEVICE_OUT_SPEAKER                   = 0x2,
-    AUDIO_DEVICE_OUT_WIRED_HEADSET             = 0x4,
-    AUDIO_DEVICE_OUT_WIRED_HEADPHONE           = 0x8,
+    AUDIO_DEVICE_OUT_WIRED_HEADSET             = 0x80,
+    AUDIO_DEVICE_OUT_WIRED_HEADPHONE           = 0x80,
     AUDIO_DEVICE_OUT_BLUETOOTH_SCO             = 0x10,
     AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET     = 0x20,
     AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT      = 0x40,

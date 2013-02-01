@@ -20,7 +20,8 @@
 
 using mozilla::unused;
 USING_BLUETOOTH_NAMESPACE
-
+#include <android/log.h>
+#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "A2DP", args);
 /*******************************************************************************
  * BluetoothRequestParent::ReplyRunnable
  ******************************************************************************/
@@ -502,6 +503,7 @@ BluetoothRequestParent::DoRequest(const DenyAuthorizationRequest& aRequest)
 bool
 BluetoothRequestParent::DoRequest(const ConnectRequest& aRequest)
 {
+  LOG("--------BluetoothRequestParent::DoRequest connect------");
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TConnectRequest);
 
@@ -516,6 +518,7 @@ BluetoothRequestParent::DoRequest(const ConnectRequest& aRequest)
 bool
 BluetoothRequestParent::DoRequest(const DisconnectRequest& aRequest)
 {
+  LOG("--------BluetoothRequestParent::DoRequest disconnect------");
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TDisconnectRequest);
 

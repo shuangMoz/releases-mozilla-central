@@ -26,9 +26,10 @@ public:
 
   bool Connect(const nsAString& aDeviceObjectPath,
                BluetoothReplyRunnable* aRunnable);
-  void Disconnect();
+  void Disconnect(const nsAString& aDeviceObjectPath,
+               BluetoothReplyRunnable* aRunnable);
   bool Listen();
-
+  void GetConnectedSinkAddress(nsAString& aDeviceAddress);
 private:
   BluetoothA2dpManager();
   bool Init();
@@ -38,6 +39,7 @@ private:
   virtual void OnDisconnect() MOZ_OVERRIDE;
 
   int mSocketStatus;
+  nsString mCurrentAddress;
 };
 
 END_BLUETOOTH_NAMESPACE

@@ -245,8 +245,10 @@ public:
                       mozilla::ipc::UnixSocketConsumer* aSocketConsumer,
                       BluetoothReplyRunnable* aRunnable) = 0;
 
-  virtual bool ConnectSink() = 0;
-  virtual bool DisconnectSink() = 0;
+  virtual bool ConnectSink(const nsAString& aObjectPath,
+                      BluetoothReplyRunnable* aRunnable) = 0;
+  virtual bool DisconnectSink(const nsAString& aObjectPath,
+                      BluetoothReplyRunnable* aRunnable) = 0;
 
   // ===================== Bonding =====================
   virtual bool

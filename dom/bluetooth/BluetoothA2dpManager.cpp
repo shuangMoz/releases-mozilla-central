@@ -89,6 +89,7 @@ bool
 BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
                               BluetoothReplyRunnable* aRunnable)
 {
+  LOG("a2dp manager connect");
   MOZ_ASSERT(NS_IsMainThread());
 
   BluetoothService* bs = BluetoothService::Get();
@@ -99,7 +100,7 @@ BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
 
   // TODO(Eric)
   // Please decide what should be passed into function ConnectSink()
-  bs->ConnectSink();
+  bs->ConnectSink(aDeviceAddress, aRunnable);
 
   return true;
 }
@@ -116,7 +117,8 @@ BluetoothA2dpManager::Listen()
 }
 
 void
-BluetoothA2dpManager::Disconnect()
+BluetoothA2dpManager::Disconnect(const nsAString& aDeviceAddress,
+                                BluetoothReplyRunnable* aRunnable)
 {
   BluetoothService* bs = BluetoothService::Get();
   if(!bs) {
@@ -124,7 +126,12 @@ BluetoothA2dpManager::Disconnect()
     return;
   }
 
-  bs->DisconnectSink();
+  bs->DisconnectSink(aDeviceAddress, aRunnable);
+}
+
+void BluetoothA2dpManager::GetConnectedSinkAddress(nsAString& aDeviceAddress)
+{
+  aDeviceAddress = mCurrentAddress;
 }
 
 void

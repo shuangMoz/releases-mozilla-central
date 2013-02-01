@@ -12,7 +12,8 @@
 #include "mozilla/dom/ContentChild.h"
 
 #include "BluetoothChild.h"
-
+#include <android/log.h>
+#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "ServiceChildProcess", args);
 USING_BLUETOOTH_NAMESPACE
 
 namespace {
@@ -307,6 +308,7 @@ BluetoothServiceChildProcess::Connect(
   const uint16_t aProfileId,
   BluetoothReplyRunnable* aRunnable)
 {
+  LOG("BluetoothServiceChildProcess::Connect");
   SendRequest(aRunnable,
               ConnectRequest(nsString(aDeviceAddress),
                              nsString(aAdapterPath),
@@ -318,6 +320,7 @@ BluetoothServiceChildProcess::Disconnect(
   const uint16_t aProfileId,
   BluetoothReplyRunnable* aRunnable)
 {
+  LOG("BluetoothServiceChildProcess::Disconnect");
   SendRequest(aRunnable, DisconnectRequest(aProfileId));
 }
 
@@ -398,14 +401,17 @@ BluetoothServiceChildProcess::IsConnected(uint16_t aProfileId)
 }
 
 bool
-BluetoothServiceChildProcess::ConnectSink()
+BluetoothServiceChildProcess::ConnectSink(const nsAString& aDeviceAddress,
+  BluetoothReplyRunnable* aRunnable)
 {
+  LOG("BluetoothServiceChildProcess::ConnectSink");
   MOZ_NOT_REACHED("This should never be called!");
   return false;
 }
 
 bool
-BluetoothServiceChildProcess::DisconnectSink()
+BluetoothServiceChildProcess::DisconnectSink(const nsAString& aDeviceAddress,
+  BluetoothReplyRunnable* aRunnable)
 {
   MOZ_NOT_REACHED("This should never be called!");
   return false;

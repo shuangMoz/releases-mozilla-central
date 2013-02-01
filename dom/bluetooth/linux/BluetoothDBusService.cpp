@@ -45,7 +45,7 @@
 #if defined(MOZ_WIDGET_GONK)
 #include "cutils/properties.h"
 #endif
-
+#define A2DP_DEBUG 1
 /**
  * Some rules for dealing with memory in DBus:
  * - A DBusError only needs to be deleted if it's been set, not just
@@ -74,6 +74,8 @@ USING_BLUETOOTH_NAMESPACE
 #define DBUS_ADAPTER_IFACE BLUEZ_DBUS_BASE_IFC ".Adapter"
 #define DBUS_DEVICE_IFACE BLUEZ_DBUS_BASE_IFC ".Device"
 #define DBUS_AGENT_IFACE BLUEZ_DBUS_BASE_IFC ".Agent"
+#define DBUS_SINK_IFACE BLUEZ_DBUS_BASE_IFC ".AudioSink"
+#define DBUS_CTL_IFACE BLUEZ_DBUS_BASE_IFC ".Control"
 #define BLUEZ_DBUS_BASE_PATH      "/org/bluez"
 #define BLUEZ_DBUS_BASE_IFC       "org.bluez"
 #define BLUEZ_ERROR_IFC           "org.bluez.Error"
@@ -123,6 +125,13 @@ static Properties sAdapterProperties[] = {
 
 static Properties sManagerProperties[] = {
   {"Adapters", DBUS_TYPE_ARRAY},
+};
+
+static Properties sSinkProperties[] = {
+  {"State", DBUS_TYPE_STRING},
+  {"Connected", DBUS_TYPE_BOOLEAN},
+  {"Playing", DBUS_TYPE_BOOLEAN},
+  {"Protected", DBUS_TYPE_BOOLEAN},
 };
 
 static const char* sBluetoothDBusIfaces[] =
@@ -1466,6 +1475,24 @@ EventFilter(DBusConnection* aConn, DBusMessage* aMsg, void* aData)
                         errorStr,
                         sManagerProperties,
                         ArrayLength(sManagerProperties));
+  } else if (dbus_message_is_signal(aMsg, DBUS_SINK_IFACE, "PropertyChanged")) {
+    ParsePropertyChange(aMsg,
+                        v,
+                        errorStr,
+                        sSinkProperties,
+                        ArrayLength(sSinkProperties));
+    if (v.get_ArrayOfBluetoothNamedValue()[0].name().EqualsLiteral("State")) {
+        nsString address = GetAddressFromObjectPath(signalPath);
+        // transfer signal to BluetoothService
+        signalName = NS_LITERAL_STRING("A2dpConnStatusChanged");
+        signalPath = NS_LITERAL_STRING(LOCAL_AGENT_PATH);
+        InfallibleTArray<BluetoothNamedValue>& properties =
+          v.get_ArrayOfBluetoothNamedValue();
+        BluetoothNamedValue pAddress(NS_LITERAL_STRING("address"), BluetoothValue(address));
+        properties.AppendElement(pAddress);
+    }
+  } else if (dbus_message_is_signal(aMsg, DBUS_CTL_IFACE, "GetPlayStatus")) {
+    LOG("+++++++ A2DP GetPlayStatus++++++++");
   } else {
 #ifdef DEBUG
     nsAutoCString signalStr;
@@ -2455,6 +2482,7 @@ BluetoothDBusService::Connect(const nsAString& aDeviceAddress,
       DispatchBluetoothReply(aRunnable, v, errorStr);
     }
   } else if (aProfileId == BluetoothServiceClass::A2DP) {
+    LOG("Profile ID == A2DP");
     BluetoothA2dpManager* a2dp = BluetoothA2dpManager::Get();
     if (!a2dp->Connect(GetObjectPathFromAddress(aAdapterPath, aDeviceAddress),
                        aRunnable)) {
@@ -2480,6 +2508,12 @@ BluetoothDBusService::Disconnect(const uint16_t aProfileId,
   } else if (aProfileId == BluetoothServiceClass::OBJECT_PUSH) {
     BluetoothOppManager* opp = BluetoothOppManager::Get();
     opp->Disconnect();
+  } else if (aProfileId == BluetoothServiceClass::A2DP) {
+    BluetoothA2dpManager* a2dp = BluetoothA2dpManager::Get();
+    nsString currentAddr;
+    a2dp->GetConnectedSinkAddress(currentAddr);
+    a2dp->Disconnect(currentAddr, aRunnable);
+
   } else {
     NS_WARNING("Unknown profile");
     return;
@@ -2777,25 +2811,256 @@ BluetoothDBusService::ListenSocketViaService(int aChannel,
 }
 
 bool
-BluetoothDBusService::ConnectSink()
+BluetoothDBusService::GetSinkProperties(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
 {
   bool ret = true;
-  /*
-    ret = dbus_func_args_async(env, nat->conn, -1, onConnectSinkResult, context_path,
-                               nat, c_path, "org.bluez.AudioSink", "Connect",
-                               DBUS_TYPE_INVALID);
-  */
+#ifdef A2DP_DEBUG
+  LOG("Get Sink prop!");
+#endif
+  LOG(NS_ConvertUTF16toUTF8(aDeviceObjectPath).get());
+  nsRefPtr<BluetoothReplyRunnable> runnable = aRunnable;
+
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            GetObjectPathCallback,
+                            (void*)runnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_SINK_IFACE,
+                            "Connect",
+                            DBUS_TYPE_INVALID);
+
+  if (!ret) {
+    LOG("Could not start async function!");
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
   return ret;
 }
 
 bool
-BluetoothDBusService::DisconnectSink()
+BluetoothDBusService::ConnectSink(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
 {
   bool ret = true;
-  /*
-  ret = dbus_func_args_async(env, nat->conn, -1, NULL, NULL, nat,
-                             c_path, "org.bluez.AudioSink", "Disconnect",
-                             DBUS_TYPE_INVALID);
-  */
+#ifdef A2DP_DEBUG
+  LOG("Connect Sink!");
+#endif
+  LOG(NS_ConvertUTF16toUTF8(aDeviceObjectPath).get());
+  nsRefPtr<BluetoothReplyRunnable> runnable = aRunnable;
+
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            GetObjectPathCallback,
+                            (void*)runnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_SINK_IFACE,
+                            "Connect",
+                            DBUS_TYPE_INVALID);
+
+  if (!ret) {
+    LOG("Could not start async function!");
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
   return ret;
 }
+
+bool
+BluetoothDBusService::DisconnectSink(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("Disconnect Sink!");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_SINK_IFACE,
+                            "Disconnect",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+
+bool
+BluetoothDBusService::SuspendSink(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("Suspend Sink!");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_SINK_IFACE,
+                            "Suspend",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+
+bool
+BluetoothDBusService::ResumeSink(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("Resume Sink!");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_SINK_IFACE,
+                            "Resume",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+
+bool
+BluetoothDBusService::VolumeUp(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("VolumeUp!");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_CTL_IFACE,
+                            "VolumeUp",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+
+bool
+BluetoothDBusService::VolumeDown(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("VolumeDown");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_CTL_IFACE,
+                            "VolumeUp",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+
+#if 0
+//AVRCP 1.3 feature
+bool
+BluetoothDBusService::UpdateMetaData(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("UpdateMetaData");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_CTL_IFACE,
+                            "VolumeUp",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+#endif
+
+#if 0
+//AVRCP 1.3 feature
+bool
+BluetoothDBusService::UpdatePlayStatus(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("UpdateMetaData");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_CTL_IFACE,
+                            "UpdatePlayStatus",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+
+bool
+BluetoothDBusService::UpdateNotification(const nsAString& aDeviceObjectPath,
+                                  BluetoothReplyRunnable* aRunnable)
+{
+#ifdef A2DP_DEBUG
+  LOG("UpdateMetaData");
+#endif
+  bool ret = true;
+  ret = dbus_func_args_async(mConnection,
+                            -1,
+                            NULL,
+                            (void*)aRunnable,
+                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            DBUS_CTL_IFACE,
+                            "UpdateNotification",
+                            DBUS_TYPE_INVALID);
+  if (!ret) {
+    NS_WARNING("Could not start async function!");
+    return NS_ERROR_FAILURE;
+  }
+
+  return ret;
+}
+
+#endif
