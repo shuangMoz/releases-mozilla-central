@@ -176,6 +176,16 @@ public:
                   BluetoothReplyRunnable* aRunnable);
   virtual bool VolumeDown(const nsAString& aDeviceAddress,
                   BluetoothReplyRunnable* aRunnable);
+  virtual bool UpdatePlayStatus(const nsAString& aPath,
+                  const uint16_t aDuration, const uint16_t aPosition,
+                  const uint16_t aPlayStatus);
+  virtual bool UpdateMetaData(const nsAString& aDeviceObjectPath,
+                  const nsAString& aTitle,
+                  const nsAString& aArtist,
+                  const nsAString& aAlbum,
+                  const nsAString& aMediaNumber,
+                  const nsAString& aTotalMediaCount,
+                  const nsAString& aPlaytime);
 
 private:
   nsresult SendGetPropertyMessage(const nsAString& aPath,

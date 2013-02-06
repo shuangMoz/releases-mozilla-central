@@ -416,3 +416,24 @@ BluetoothServiceChildProcess::DisconnectSink(const nsAString& aDeviceAddress,
   MOZ_NOT_REACHED("This should never be called!");
   return false;
 }
+
+bool
+BluetoothServiceChildProcess::UpdatePlayStatus(const nsAString& aPath,
+  const uint16_t aDuration, const uint16_t aPosition, const uint16_t aPlayStatus)
+{
+  MOZ_NOT_REACHED("This should never be called!");
+  return false;
+}
+
+bool
+BluetoothServiceChildProcess::UpdateMetaData(const nsAString& aDeviceObjectPath,
+                 const nsAString& aTitle,
+                 const nsAString& aArtist,
+                 const nsAString& aAlbum,
+                 const nsAString& aMediaNumber,
+                 const nsAString& aTotalMediaCount,
+                 const nsAString& aPlaytime)
+{
+  MOZ_NOT_REACHED("This should never be called!");
+  return false;
+}

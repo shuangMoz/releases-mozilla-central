@@ -31,17 +31,29 @@ public:
   bool Listen();
   void GetConnectedSinkAddress(nsAString& aDeviceAddress);
   void ResetAudio();
-
+  void UpdatePlayStatus();
+  void UpdateMetaData();
 private:
   BluetoothA2dpManager();
   bool Init();
 
-  virtual void OnConnectSuccess() MOZ_OVERRIDE;
-  virtual void OnConnectError() MOZ_OVERRIDE;
-  virtual void OnDisconnect() MOZ_OVERRIDE;
+  virtual void OnConnectSuccess() MOZ_OVERRIDE; //TODO: remove this field
+  virtual void OnConnectError() MOZ_OVERRIDE; //TODO: remove this field
+  virtual void OnDisconnect() MOZ_OVERRIDE; //TODO: remove this field
 
-  int mSocketStatus;
+  int mSocketStatus; //TODO: remove this field
   nsString mCurrentAddress;
+  //AVRCP 1.3 fields
+  nsString mTrackName;
+  nsString mTrackNumber;
+  nsString mArtist;
+  nsString mAlbum;
+  nsString mTotalMediaCount;
+  nsString mPlaytime;
+  uint32_t mDuration;
+  uint32_t mPosition;
+  uint32_t mPlayStatus;
+  long mReportTime;
 };
 
 END_BLUETOOTH_NAMESPACE

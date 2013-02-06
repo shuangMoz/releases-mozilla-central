@@ -162,7 +162,16 @@ public:
                       BluetoothReplyRunnable* aRunnable) MOZ_OVERRIDE;
   virtual bool DisconnectSink(const nsAString& aDeviceAddress,
                       BluetoothReplyRunnable* aRunnable) MOZ_OVERRIDE;
-
+  virtual bool UpdatePlayStatus(const nsAString& aPath,
+                      const uint16_t aDuration, const uint16_t aPosition,
+                      const uint16_t aPlayStatus) MOZ_OVERRIDE;
+  virtual bool UpdateMetaData(const nsAString& aDeviceObjectPath,
+                      const nsAString& aTitle,
+                      const nsAString& aArtist,
+                      const nsAString& aAlbum,
+                      const nsAString& aMediaNumber,
+                      const nsAString& aTotalMediaCount,
+                      const nsAString& aPlaytime) MOZ_OVERRIDE;
 protected:
   BluetoothServiceChildProcess();
   virtual ~BluetoothServiceChildProcess();

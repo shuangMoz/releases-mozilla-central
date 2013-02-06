@@ -249,6 +249,20 @@ public:
                       BluetoothReplyRunnable* aRunnable) = 0;
   virtual bool DisconnectSink(const nsAString& aObjectPath,
                       BluetoothReplyRunnable* aRunnable) = 0;
+  //======AVRCP======
+  virtual bool
+  UpdatePlayStatus(const nsAString& aPath,
+                   const uint16_t aDuration,
+                   const uint16_t aPosition,
+                   const uint16_t aPlayStatus) = 0;
+  virtual bool
+  UpdateMetaData(const nsAString& aDeviceObjectPath,
+                 const nsAString& aTitle,
+                 const nsAString& aArtist,
+                 const nsAString& aAlbum,
+                 const nsAString& aMediaNumber,
+                 const nsAString& aTotalMediaCount,
+                 const nsAString& aPlaytime) = 0;
 
   // ===================== Bonding =====================
   virtual bool
@@ -314,6 +328,7 @@ public:
 
   void
   RemoveObserverFromTable(const nsAString& key);
+
 
 protected:
   BluetoothService()

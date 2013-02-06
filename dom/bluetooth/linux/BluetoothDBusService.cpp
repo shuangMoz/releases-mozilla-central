@@ -151,7 +151,8 @@ static const char* sBluetoothDBusSignals[] =
   "type='signal',interface='org.bluez.Network'",
   "type='signal',interface='org.bluez.NetworkServer'",
   "type='signal',interface='org.bluez.HealthDevice'",
-  "type='signal',interface='org.bluez.AudioSink'"
+  "type='signal',interface='org.bluez.AudioSink'",
+  "type='signal',interface='org.bluez.Control'",
 };
 
 /**
@@ -302,6 +303,29 @@ public:
 
 private:
   nsString mPath;
+};
+
+class UpdatePlayStatusTask : public nsRunnable {
+public:
+  UpdatePlayStatusTask()
+  {
+  }
+
+  NS_IMETHOD
+  Run()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    BluetoothA2dpManager* bs = BluetoothA2dpManager::Get();
+    if (!bs) {
+      NS_WARNING("BluetoothService not available!");
+      return NS_ERROR_FAILURE;
+    }
+    bs->UpdatePlayStatus();
+    //TODO: Move it when gaia interface is ready
+    bs->UpdateMetaData();// just for test since gaia is not ready yet
+    return NS_OK;
+  }
 };
 
 class DevicePropertiesSignalHandler : public nsRunnable
@@ -1497,6 +1521,11 @@ EventFilter(DBusConnection* aConn, DBusMessage* aMsg, void* aData)
     }
   } else if (dbus_message_is_signal(aMsg, DBUS_CTL_IFACE, "GetPlayStatus")) {
     LOG("+++++++ A2DP GetPlayStatus++++++++");
+    nsRefPtr<UpdatePlayStatusTask> b = new UpdatePlayStatusTask();
+    if (NS_FAILED(NS_DispatchToMainThread(b))) {
+       NS_WARNING("Failed to dispatch to main thread!");
+    }
+    return DBUS_HANDLER_RESULT_HANDLED;
   } else {
 #ifdef DEBUG
     nsAutoCString signalStr;
@@ -2988,23 +3017,45 @@ BluetoothDBusService::VolumeDown(const nsAString& aDeviceObjectPath,
   return ret;
 }
 
-#if 0
 //AVRCP 1.3 feature
 bool
 BluetoothDBusService::UpdateMetaData(const nsAString& aDeviceObjectPath,
-                                  BluetoothReplyRunnable* aRunnable)
+                                     const nsAString& aTitle,
+                                     const nsAString& aArtist,
+                                     const nsAString& aAlbum,
+                                     const nsAString& aMediaNumber,
+                                     const nsAString& aTotalMediaCount,
+                                     const nsAString& aPlaytime)
 {
 #ifdef A2DP_DEBUG
   LOG("UpdateMetaData");
+  LOG("Title: %s", NS_ConvertUTF16toUTF8(aTitle).get());
+  LOG("Artist: %s", NS_ConvertUTF16toUTF8(aArtist).get());
+  LOG("Album: %s", NS_ConvertUTF16toUTF8(aAlbum).get());
+  LOG("MediaNumber: %s", NS_ConvertUTF16toUTF8(aMediaNumber).get());
+  LOG("TotalMediaCount: %s", NS_ConvertUTF16toUTF8(aTotalMediaCount).get());
+  LOG("Playing time: %s", NS_ConvertUTF16toUTF8(aPlaytime).get());
 #endif
   bool ret = true;
+  const char* title = NS_ConvertUTF16toUTF8(aTitle).get();
+  const char* artist = NS_ConvertUTF16toUTF8(aArtist).get();
+  const char* album = NS_ConvertUTF16toUTF8(aAlbum).get();
+  const char* medianumber = NS_ConvertUTF16toUTF8(aMediaNumber).get();
+  const char* totalmediacount = NS_ConvertUTF16toUTF8(aTotalMediaCount).get();
+  const char* playtime = NS_ConvertUTF16toUTF8(aPlaytime).get();
   ret = dbus_func_args_async(mConnection,
                             -1,
                             NULL,
-                            (void*)aRunnable,
+                            NULL,
                             NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
                             DBUS_CTL_IFACE,
-                            "VolumeUp",
+                            "UpdateMetaData",
+                            DBUS_TYPE_STRING, &title,
+                            DBUS_TYPE_STRING, &artist,
+                            DBUS_TYPE_STRING, &album,
+                            DBUS_TYPE_STRING, &medianumber,
+                            DBUS_TYPE_STRING, &totalmediacount,
+                            DBUS_TYPE_STRING, &playtime,
                             DBUS_TYPE_INVALID);
   if (!ret) {
     NS_WARNING("Could not start async function!");
@@ -3013,25 +3064,30 @@ BluetoothDBusService::UpdateMetaData(const nsAString& aDeviceObjectPath,
 
   return ret;
 }
-#endif
 
-#if 0
 //AVRCP 1.3 feature
 bool
-BluetoothDBusService::UpdatePlayStatus(const nsAString& aDeviceObjectPath,
-                                  BluetoothReplyRunnable* aRunnable)
+BluetoothDBusService::UpdatePlayStatus(const nsAString& aPath,
+                  const uint16_t aDuration, const uint16_t aPosition,
+                  const uint16_t aPlayStatus)
 {
 #ifdef A2DP_DEBUG
-  LOG("UpdateMetaData");
+  LOG("UpdatePlayStatus Duration: %d, Position: %d, PlayStatus: %d",
+     aDuration, aPosition, aPlayStatus);
+//TODO:
+//Still have problem with control.c duration, position is abnormal
 #endif
   bool ret = true;
   ret = dbus_func_args_async(mConnection,
                             -1,
                             NULL,
-                            (void*)aRunnable,
-                            NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
+                            NULL,
+                            NS_ConvertUTF16toUTF8(aPath).get(),
                             DBUS_CTL_IFACE,
                             "UpdatePlayStatus",
+                            DBUS_TYPE_UINT32, &aDuration,
+                            DBUS_TYPE_UINT32, &aPosition,
+                            DBUS_TYPE_UINT32, &aPlayStatus,
                             DBUS_TYPE_INVALID);
   if (!ret) {
     NS_WARNING("Could not start async function!");
@@ -3041,6 +3097,7 @@ BluetoothDBusService::UpdatePlayStatus(const nsAString& aDeviceObjectPath,
   return ret;
 }
 
+#if 0
 bool
 BluetoothDBusService::UpdateNotification(const nsAString& aDeviceObjectPath,
                                   BluetoothReplyRunnable* aRunnable)
