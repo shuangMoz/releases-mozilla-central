@@ -10,13 +10,22 @@
 #include "BluetoothCommon.h"
 #include "mozilla/ipc/UnixSocket.h"
 #include "nsIObserver.h"
+#include "BluetoothRilListener.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothReplyRunnable;
 
+enum BluetoothA2dpState {
+  SINK_DISCONNECTED = 0,
+  SINK_CONNECTING = 1,
+  SINK_CONNECTED = 2,
+  SINK_PLAYING = 3
+};
+
 class BluetoothA2dpManager : public mozilla::ipc::UnixSocketConsumer
 {
+//TODO: BluetoothA2dpManager shall not inherits UnixSocketConsumer
 public:
   ~BluetoothA2dpManager();
 
@@ -33,15 +42,18 @@ public:
   void ResetAudio();
   void UpdatePlayStatus();
   void UpdateMetaData();
+  void HandleSinkPropertyChange(const nsAString& aDeviceObjectPath,
+                                const nsAString& newState);
+  void UpdateNotification(const nsAString& aDeviceObjectPath,
+                          const uint16_t aEventid, const uint32_t aData);
 private:
   BluetoothA2dpManager();
   bool Init();
-
   virtual void OnConnectSuccess() MOZ_OVERRIDE; //TODO: remove this field
   virtual void OnConnectError() MOZ_OVERRIDE; //TODO: remove this field
   virtual void OnDisconnect() MOZ_OVERRIDE; //TODO: remove this field
-
   int mSocketStatus; //TODO: remove this field
+  BluetoothA2dpState mCurrentSinkState;
   nsString mCurrentAddress;
   //AVRCP 1.3 fields
   nsString mTrackName;
@@ -54,8 +66,9 @@ private:
   uint32_t mPosition;
   uint32_t mPlayStatus;
   long mReportTime;
+  //TODO:Add RIL listener for suspend/resume A2DP
+  //For the reason HFP/A2DP usage switch, we need to force suspend A2DP
+  nsAutoPtr<BluetoothRilListener> mListener;
 };
-
 END_BLUETOOTH_NAMESPACE
-
 #endif

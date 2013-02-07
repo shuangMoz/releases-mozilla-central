@@ -39,7 +39,8 @@ static const int STATUS_PAUSED = 0x02;
 static const int STATUS_FWD_SEEK = 0x03;
 static const int STATUS_REV_SEEK = 0x04;
 static const int STATUS_ERROR = 0xFF;
-
+static const int EVENT_PLAYSTATUS_CHANGED = 0x1;
+static const int EVENT_TRACK_CHANGED = 0x2;
 namespace {
 StaticRefPtr<BluetoothA2dpManager> gBluetoothA2dpManager;
 } // anonymous namespace
@@ -105,6 +106,20 @@ MakeA2dpDeviceUnavailableNow(const nsAString& aBdAddress)
                         AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE, NS_ConvertUTF16toUTF8(aBdAddress).get());
 }
 
+static BluetoothA2dpState
+ConvertSinkStringToState(const nsAString& aNewState)
+{
+  if (aNewState.EqualsLiteral("disonnected"))
+    return BluetoothA2dpState::SINK_DISCONNECTED;
+  if (aNewState.EqualsLiteral("connecting"))
+    return BluetoothA2dpState::SINK_CONNECTING;
+  if (aNewState.EqualsLiteral("connected"))
+    return BluetoothA2dpState::SINK_CONNECTED;
+  if (aNewState.EqualsLiteral("playing"))
+    return BluetoothA2dpState::SINK_PLAYING;
+    return BluetoothA2dpState::SINK_DISCONNECTED;
+}
+
 // Virtual function of class SocketConsumer
 void
 BluetoothA2dpManager::ReceiveSocketData(mozilla::ipc::UnixSocketRawData* aMessage)
@@ -113,10 +128,35 @@ BluetoothA2dpManager::ReceiveSocketData(mozilla::ipc::UnixSocketRawData* aMessag
   MOZ_NOT_REACHED("This should never be called!");
 }
 
+void
+BluetoothA2dpManager::HandleSinkPropertyChange(const nsAString& aDeviceObjectPath,
+                         const nsAString& aNewState)
+{
+  //Possible values: "disconnected", "connecting",
+  //"connected", "playing"
+  // 1. "disconnected" -> "connecting"
+  //  Either an incoming or outgoing connection
+  //  attempt ongoing.
+  // 2. "connecting" -> "disconnected"
+  // Connection attempt failed
+  // 3. "connecting" -> "connected"
+  //     Successfully connected
+  // 4. "connected" -> "playing"
+  //     SCO audio connection successfully opened
+  // 5. "playing" -> "connected"
+  //     SCO audio connection closed
+  // 6. "connected" -> "disconnected"
+  // 7. "playing" -> "disconnected"
+  //     Disconnected from the remote device
+  mCurrentSinkState = ConvertSinkStringToState(aNewState);
+  //TODO: Need to check Sink state and do more stuffs
+}
+
 bool
 BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
                               BluetoothReplyRunnable* aRunnable)
 {
+  //TODO: We shall decide BluetoothReplyRunnable is necessary, cleanup!
   LOG("a2dp manager connect");
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -141,8 +181,8 @@ bool
 BluetoothA2dpManager::Listen()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  // TODO(Eric)
-  // Needs implementation to really "Listen to remote A2DP connection request"
+  // TODO
+  // Remove it is necessary
 
   return true;
 }
@@ -150,6 +190,8 @@ BluetoothA2dpManager::Listen()
 void
 BluetoothA2dpManager::ResetAudio()
 {
+  //TODO:
+  //It is necessary we need to handle it in Audio module!
   SetParameter(NS_LITERAL_STRING("bluetooth_enabled=false"));
   SetParameter(NS_LITERAL_STRING("A2dpSuspended=true"));
   MakeA2dpDeviceUnavailableNow(GetAddressFromObjectPath(mCurrentAddress));
@@ -179,6 +221,7 @@ BluetoothA2dpManager::UpdateMetaData()
   BluetoothService* bs = BluetoothService::Get();
   if (mPlayStatus == STATUS_PLAYING) {
     //TODO: we need to handle position
+    //this currently just skelton
     LOG("Update position: %d", mPosition);
   }
   //TODO: we shall use the real data from gaia app
@@ -210,34 +253,38 @@ BluetoothA2dpManager::Disconnect(const nsAString& aDeviceAddress,
   android::AudioSystem::setForceUse((audio_policy_force_use_t)1, (audio_policy_forced_cfg_t)10);
 }
 
-void BluetoothA2dpManager::GetConnectedSinkAddress(nsAString& aDeviceAddress)
+void
+BluetoothA2dpManager::GetConnectedSinkAddress(nsAString& aDeviceAddress)
 {
+  //TODO: need to check more condition
   aDeviceAddress = mCurrentAddress;
+}
+
+void
+BluetoothA2dpManager::UpdateNotification(const nsAString& aDeviceObjectPath,
+                                const uint16_t aEventid, const uint32_t aData)
+{
+  //send notification if:
+  //1.Meta data change (Event Track change)
+  //2.Play status changed
+  BluetoothService* bs = BluetoothService::Get();
+  bs->UpdateNotification(aDeviceObjectPath, aEventid, aData);
 }
 
 void
 BluetoothA2dpManager::OnConnectSuccess()
 {
-  nsString address;
-  GetSocketAddr(address);
-
-  mSocketStatus = GetConnectionStatus();
+  //TODO: dummy function. Cleanup in the future
 }
 
 void
 BluetoothA2dpManager::OnConnectError()
 {
   //TODO: this is dummy, shall be removed
-  CloseSocket();
-  mSocketStatus = GetConnectionStatus();
-  Listen();
 }
 
 void
 BluetoothA2dpManager::OnDisconnect()
 {
   //TODO: this is dummy, shall be removed
-  if (mSocketStatus == SocketConnectionStatus::SOCKET_CONNECTED) {
-    Listen();
-  }
 }

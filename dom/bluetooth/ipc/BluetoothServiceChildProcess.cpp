@@ -437,3 +437,10 @@ BluetoothServiceChildProcess::UpdateMetaData(const nsAString& aDeviceObjectPath,
   MOZ_NOT_REACHED("This should never be called!");
   return false;
 }
+bool
+BluetoothServiceChildProcess::UpdateNotification(const nsAString& aDeviceObjectPath,
+                        const uint16_t aEventid, const uint32_t aData)
+{
+  MOZ_NOT_REACHED("This should never be called!");
+  return false;
+}

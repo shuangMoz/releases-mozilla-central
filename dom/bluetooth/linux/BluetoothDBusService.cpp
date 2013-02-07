@@ -1510,6 +1510,15 @@ EventFilter(DBusConnection* aConn, DBusMessage* aMsg, void* aData)
                         sSinkProperties,
                         ArrayLength(sSinkProperties));
     if (v.get_ArrayOfBluetoothNamedValue()[0].name().EqualsLiteral("State")) {
+        //LOGS the state changed
+        //Sink Property changed
+        nsString currentState = v.get_ArrayOfBluetoothNamedValue()[0].value().get_nsString();
+        LOG("A2DP New State is: %s", NS_ConvertUTF16toUTF8(v.get_ArrayOfBluetoothNamedValue()[0].value().get_nsString()).get());
+        BluetoothA2dpManager *bs = BluetoothA2dpManager::Get();
+        //TODO:
+        //We need to handle Sink property change and state change event,
+        //move to BluetoothA2dpManager.
+        //bs->HandleSinkPropertyChange(address, currentState);
         nsString address = GetAddressFromObjectPath(signalPath);
         // transfer signal to BluetoothService
         signalName = NS_LITERAL_STRING("A2dpConnStatusChanged");
@@ -3043,6 +3052,7 @@ BluetoothDBusService::UpdateMetaData(const nsAString& aDeviceObjectPath,
   const char* medianumber = NS_ConvertUTF16toUTF8(aMediaNumber).get();
   const char* totalmediacount = NS_ConvertUTF16toUTF8(aTotalMediaCount).get();
   const char* playtime = NS_ConvertUTF16toUTF8(aPlaytime).get();
+  //TODO:Need to handle callback to check return value if dbus failed
   ret = dbus_func_args_async(mConnection,
                             -1,
                             NULL,
@@ -3074,10 +3084,11 @@ BluetoothDBusService::UpdatePlayStatus(const nsAString& aPath,
 #ifdef A2DP_DEBUG
   LOG("UpdatePlayStatus Duration: %d, Position: %d, PlayStatus: %d",
      aDuration, aPosition, aPlayStatus);
-//TODO:
-//Still have problem with control.c duration, position is abnormal
+  //TODO:
+  //Still have problem with control.c duration, position is abnormal
 #endif
   bool ret = true;
+  //TODO:Need to handle callback to check return value if dbus failed
   ret = dbus_func_args_async(mConnection,
                             -1,
                             NULL,
@@ -3097,22 +3108,23 @@ BluetoothDBusService::UpdatePlayStatus(const nsAString& aPath,
   return ret;
 }
 
-#if 0
 bool
 BluetoothDBusService::UpdateNotification(const nsAString& aDeviceObjectPath,
-                                  BluetoothReplyRunnable* aRunnable)
+                                  const uint16_t aEventid, const uint32_t aData)
 {
 #ifdef A2DP_DEBUG
-  LOG("UpdateMetaData");
+  LOG("UpdateNotification");
 #endif
   bool ret = true;
   ret = dbus_func_args_async(mConnection,
                             -1,
                             NULL,
-                            (void*)aRunnable,
+                            NULL,
                             NS_ConvertUTF16toUTF8(aDeviceObjectPath).get(),
                             DBUS_CTL_IFACE,
                             "UpdateNotification",
+                            DBUS_TYPE_INT16, &aEventid,
+                            DBUS_TYPE_UINT64, &aData,
                             DBUS_TYPE_INVALID);
   if (!ret) {
     NS_WARNING("Could not start async function!");
@@ -3121,5 +3133,3 @@ BluetoothDBusService::UpdateNotification(const nsAString& aDeviceObjectPath,
 
   return ret;
 }
-
-#endif

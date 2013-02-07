@@ -172,6 +172,9 @@ public:
                       const nsAString& aMediaNumber,
                       const nsAString& aTotalMediaCount,
                       const nsAString& aPlaytime) MOZ_OVERRIDE;
+  virtual bool UpdateNotification(const nsAString& aDeviceObjectPath,
+                                  const uint16_t aEventid,
+                                  const uint32_t aData) MOZ_OVERRIDE;
 protected:
   BluetoothServiceChildProcess();
   virtual ~BluetoothServiceChildProcess();

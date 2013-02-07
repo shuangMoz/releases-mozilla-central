@@ -186,7 +186,8 @@ public:
                   const nsAString& aMediaNumber,
                   const nsAString& aTotalMediaCount,
                   const nsAString& aPlaytime);
-
+  virtual bool UpdateNotification(const nsAString& aDeviceObjectPath,
+                                        const uint16_t aEventid, const uint32_t aData);
 private:
   nsresult SendGetPropertyMessage(const nsAString& aPath,
                                   const char* aInterface,

@@ -263,6 +263,9 @@ public:
                  const nsAString& aMediaNumber,
                  const nsAString& aTotalMediaCount,
                  const nsAString& aPlaytime) = 0;
+  virtual bool
+  UpdateNotification(const nsAString& aDeviceObjectPath,
+                     const uint16_t aEventid, const uint32_t aData) = 0;
 
   // ===================== Bonding =====================
   virtual bool
