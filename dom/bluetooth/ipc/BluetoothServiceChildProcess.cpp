@@ -426,16 +426,18 @@ BluetoothServiceChildProcess::UpdatePlayStatus(const nsAString& aPath,
 }
 
 bool
-BluetoothServiceChildProcess::UpdateMetaData(const nsAString& aDeviceObjectPath,
+BluetoothServiceChildProcess::UpdateMetaData(const nsAString& aDeviceAddress,
                  const nsAString& aTitle,
                  const nsAString& aArtist,
                  const nsAString& aAlbum,
                  const nsAString& aMediaNumber,
                  const nsAString& aTotalMediaCount,
-                 const nsAString& aPlaytime)
+                 const nsAString& aPlaytime,
+                 BluetoothReplyRunnable* aRunnable)
 {
-  MOZ_NOT_REACHED("This should never be called!");
-  return false;
+  SendRequest(aRunnable, UpdateMetaDataRequest(nsString(aDeviceAddress), nsString(aTitle),
+        nsString(aArtist), nsString(aAlbum), nsString(aMediaNumber), nsString(aTotalMediaCount), nsString(aPlaytime)));
+  return true;
 }
 bool
 BluetoothServiceChildProcess::UpdateNotification(const nsAString& aDeviceObjectPath,

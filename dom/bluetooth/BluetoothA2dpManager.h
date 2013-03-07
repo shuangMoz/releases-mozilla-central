@@ -41,11 +41,15 @@ public:
   void GetConnectedSinkAddress(nsAString& aDeviceAddress);
   void ResetAudio();
   void UpdatePlayStatus();
-  void UpdateMetaData();
+  void UpdateMetaData(const nsAString& aTitle, const nsAString& aArtist,
+                      const nsAString& aAlbum, const nsAString& aMediaNumber,
+                      const nsAString& aTotalMediaCount, const nsAString& aPlaytime,
+                      BluetoothReplyRunnable* aRunnable);
   void HandleSinkPropertyChange(const nsAString& aDeviceObjectPath,
                                 const nsAString& newState);
   void UpdateNotification(const nsAString& aDeviceObjectPath,
                           const uint16_t aEventid, const uint32_t aData);
+  void HandleCallStateChanged(uint16_t aCallState);
 private:
   BluetoothA2dpManager();
   bool Init();

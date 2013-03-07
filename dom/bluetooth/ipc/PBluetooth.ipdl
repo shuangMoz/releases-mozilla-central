@@ -131,6 +131,17 @@ struct DenyReceivingFileRequest
   nsString devicePath;
 };
 
+struct UpdateMetaDataRequest
+{
+  nsString devicePath;
+  nsString title;
+  nsString artist;
+  nsString album;
+  nsString trackNumber;
+  nsString totalTracks;
+  nsString duration;
+};
+
 union Request
 {
   DefaultAdapterPathRequest;
@@ -153,6 +164,7 @@ union Request
   StopSendingFileRequest;
   ConfirmReceivingFileRequest;
   DenyReceivingFileRequest;
+  UpdateMetaDataRequest;
 };
 
 protocol PBluetooth

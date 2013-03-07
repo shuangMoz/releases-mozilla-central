@@ -183,6 +183,10 @@ protected:
 
   bool
   DoRequest(const DenyReceivingFileRequest& aRequest);
+
+  bool
+  DoRequest(const UpdateMetaDataRequest& aRequest);
+
 };
 
 END_BLUETOOTH_NAMESPACE

@@ -11,6 +11,7 @@
 #include "BluetoothReplyRunnable.h"
 #include "BluetoothService.h"
 #include "BluetoothUtils.h"
+#include "BluetoothA2dpManager.h"
 #include "GeneratedEvents.h"
 
 #include "nsContentUtils.h"
@@ -27,9 +28,11 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/LazyIdleThread.h"
 #include "mozilla/Util.h"
+#include "DictionaryHelpers.h"
 
 using namespace mozilla;
-
+#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "Adapter", args);
+#define DBG  1
 USING_BLUETOOTH_NAMESPACE
 
 DOMCI_DATA(BluetoothAdapter, BluetoothAdapter)
@@ -820,6 +823,55 @@ BluetoothAdapter::SendFile(const nsAString& aDeviceAddress,
   bs->SendFile(aDeviceAddress, nullptr, actor, result);
   req.forget(aRequest);
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BluetoothAdapter::SendMetaData(const nsAString& aDeviceAddress,
+                                 const JS::Value& aValue, nsIDOMDOMRequest** aRequest)
+{
+  JSContext* cx = nsContentUtils::GetSafeJSContext();
+  AvrcpMetaDataInfo metainfo;
+  metainfo.Init(cx, &aValue);
+#ifdef DBG
+  LOG("SendPlayStatus");
+  LOG("Song title: %s", NS_ConvertUTF16toUTF8(metainfo.title).get());
+  LOG("Song artist: %s", NS_ConvertUTF16toUTF8(metainfo.artist).get());
+  LOG("Song album: %s", NS_ConvertUTF16toUTF8(metainfo.album).get());
+  LOG("Song currentTime: %s", NS_ConvertUTF16toUTF8(metainfo.currentTime).get());
+  LOG("Song duration: %s", NS_ConvertUTF16toUTF8(metainfo.duration).get());
+  LOG("Song total track: %s", NS_ConvertUTF16toUTF8(metainfo.totalTracks).get());
+  LOG("Song track no: %s", NS_ConvertUTF16toUTF8(metainfo.trackNumber).get());
+  LOG("Song track no: %s", NS_ConvertUTF16toUTF8(metainfo.isPlaying).get());
+#endif
+  nsCOMPtr<nsIDOMRequestService> rs = do_GetService("@mozilla.org/dom/dom-request-service;1");
+  if (!rs) {
+    NS_WARNING("No DOMRequest Service!");
+    return NS_ERROR_FAILURE;
+  }
+
+  BluetoothService* bs = BluetoothService::Get();
+  if (!bs) {
+    NS_WARNING("BluetoothService not available!");
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsIDOMDOMRequest> req;
+  nsresult rv = rs->CreateRequest(GetOwner(), getter_AddRefs(req));
+  if (NS_FAILED(rv)) {
+    NS_WARNING("Can't create DOMRequest!");
+    return NS_ERROR_FAILURE;
+  }
+
+  nsRefPtr<BluetoothVoidReplyRunnable> result = new BluetoothVoidReplyRunnable(req);
+  BluetoothA2dpManager* a2dp = BluetoothA2dpManager::Get();
+  a2dp->UpdateMetaData(metainfo.title,
+                       metainfo.artist,
+                       metainfo.album,
+                       metainfo.trackNumber,
+                       metainfo.totalTracks,
+                       metainfo.currentTime,
+                       result);
   return NS_OK;
 }
 

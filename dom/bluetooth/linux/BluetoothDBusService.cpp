@@ -323,7 +323,6 @@ public:
     }
     bs->UpdatePlayStatus();
     //TODO: Move it when gaia interface is ready
-    bs->UpdateMetaData();// just for test since gaia is not ready yet
     return NS_OK;
   }
 };
@@ -3034,7 +3033,8 @@ BluetoothDBusService::UpdateMetaData(const nsAString& aDeviceObjectPath,
                                      const nsAString& aAlbum,
                                      const nsAString& aMediaNumber,
                                      const nsAString& aTotalMediaCount,
-                                     const nsAString& aPlaytime)
+                                     const nsAString& aPlaytime,
+                                     BluetoothReplyRunnable* aRunnable)
 {
 #ifdef A2DP_DEBUG
   LOG("UpdateMetaData");
@@ -3044,6 +3044,7 @@ BluetoothDBusService::UpdateMetaData(const nsAString& aDeviceObjectPath,
   LOG("MediaNumber: %s", NS_ConvertUTF16toUTF8(aMediaNumber).get());
   LOG("TotalMediaCount: %s", NS_ConvertUTF16toUTF8(aTotalMediaCount).get());
   LOG("Playing time: %s", NS_ConvertUTF16toUTF8(aPlaytime).get());
+  LOG("DeviceObjectPath: %s", NS_ConvertUTF16toUTF8(aDeviceObjectPath).get());
 #endif
   bool ret = true;
   const char* title = NS_ConvertUTF16toUTF8(aTitle).get();
@@ -3067,6 +3068,7 @@ BluetoothDBusService::UpdateMetaData(const nsAString& aDeviceObjectPath,
                             DBUS_TYPE_STRING, &totalmediacount,
                             DBUS_TYPE_STRING, &playtime,
                             DBUS_TYPE_INVALID);
+  //TODO:Need to handle callback to check return value if dbus failed
   if (!ret) {
     NS_WARNING("Could not start async function!");
     return NS_ERROR_FAILURE;

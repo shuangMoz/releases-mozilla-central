@@ -226,6 +226,9 @@ BluetoothParent::RecvPBluetoothRequestConstructor(
       return actor->DoRequest(aRequest.get_ConfirmReceivingFileRequest());
     case Request::TDenyReceivingFileRequest:
       return actor->DoRequest(aRequest.get_DenyReceivingFileRequest());
+    case Request::TUpdateMetaDataRequest:
+      return actor->DoRequest(aRequest.get_UpdateMetaDataRequest());
+
     default:
       MOZ_NOT_REACHED("Unknown type!");
       return false;
@@ -575,5 +578,23 @@ BluetoothRequestParent::DoRequest(const DenyReceivingFileRequest& aRequest)
   mService->ConfirmReceivingFile(aRequest.devicePath(),
                                  false,
                                  mReplyRunnable.get());
+  return true;
+}
+
+bool
+BluetoothRequestParent::DoRequest(const UpdateMetaDataRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TUpdateMetaDataRequest);
+
+  mService->UpdateMetaData(aRequest.devicePath(),
+                         aRequest.title(),
+                         aRequest.artist(),
+                         aRequest.album(),
+                         aRequest.trackNumber(),
+                         aRequest.totalTracks(),
+                         aRequest.duration(),
+                         mReplyRunnable.get());
+
   return true;
 }

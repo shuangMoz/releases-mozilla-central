@@ -262,7 +262,8 @@ public:
                  const nsAString& aAlbum,
                  const nsAString& aMediaNumber,
                  const nsAString& aTotalMediaCount,
-                 const nsAString& aPlaytime) = 0;
+                 const nsAString& aPlaytime,
+                 BluetoothReplyRunnable* aRunnable) = 0;
   virtual bool
   UpdateNotification(const nsAString& aDeviceObjectPath,
                      const uint16_t aEventid, const uint32_t aData) = 0;

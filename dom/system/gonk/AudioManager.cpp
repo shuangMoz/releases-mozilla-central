@@ -306,6 +306,8 @@ AudioManager::SetPhoneState(int32_t aState)
     return NS_ERROR_FAILURE;
   }
 
+//shawn, we have problem because resume music play too fast
+  sleep(2);
   mPhoneState = aState;
 
   if (aState == PHONE_STATE_IN_CALL) {

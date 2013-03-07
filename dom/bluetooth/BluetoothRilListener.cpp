@@ -7,6 +7,7 @@
 #include "BluetoothRilListener.h"
 
 #include "BluetoothHfpManager.h"
+#include "BluetoothA2dpManager.h"
 #include "nsRadioInterfaceLayer.h"
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
@@ -32,7 +33,8 @@ BluetoothRILTelephonyCallback::CallStateChanged(uint32_t aCallIndex,
 {
   BluetoothHfpManager* hfp = BluetoothHfpManager::Get();
   hfp->HandleCallStateChanged(aCallIndex, aCallState, aNumber, true);
-
+  BluetoothA2dpManager* a2dp = BluetoothA2dpManager::Get();
+  a2dp->HandleCallStateChanged(aCallState);
   return NS_OK;
 }
 

@@ -170,6 +170,8 @@ BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
   // Please decide what should be passed into function ConnectSink()
   bs->ConnectSink(aDeviceAddress, aRunnable);
   LOG("Address: %s", NS_ConvertUTF16toUTF8(GetAddressFromObjectPath(mCurrentAddress)).get());
+  LOG("Address: %s", NS_ConvertUTF16toUTF8(mCurrentAddress).get());
+  mCurrentAddress = NS_LITERAL_STRING("/org/bluez/362/hci0/dev_00_80_98_09_0C_9F");
   SetParameter(NS_LITERAL_STRING("bluetooth_enabled=true"));
   SetParameter(NS_LITERAL_STRING("A2dpSuspended=false"));
   android::AudioSystem::setForceUse((audio_policy_force_use_t)1, (audio_policy_forced_cfg_t)0);
@@ -215,16 +217,18 @@ BluetoothA2dpManager::UpdatePlayStatus()
 }
 
 void
-BluetoothA2dpManager::UpdateMetaData()
+BluetoothA2dpManager::UpdateMetaData(const nsAString& aTitle, const nsAString& aArtist,
+                                     const nsAString& aAlbum, const nsAString& aMediaNumber,
+                                     const nsAString& aTotalMediaCount, const nsAString& aPlaytime,
+                                     BluetoothReplyRunnable* aRunnable)
 {
-  LOG("UpdateMetaData!!!!!!");
   BluetoothService* bs = BluetoothService::Get();
   if (mPlayStatus == STATUS_PLAYING) {
     //TODO: we need to handle position
     //this currently just skelton
     LOG("Update position: %d", mPosition);
   }
-  //TODO: we shall use the real data from gaia app
+#ifdef AVRCP_TESTDATA
   mTrackName = NS_LITERAL_STRING("S_Tack1");
   mArtist = NS_LITERAL_STRING("S_Artist1");
   mAlbum = NS_LITERAL_STRING("S_Album1");
@@ -232,7 +236,28 @@ BluetoothA2dpManager::UpdateMetaData()
   mTrackNumber = NS_LITERAL_STRING("1");
   mTotalMediaCount = NS_LITERAL_STRING("10");
   mPlaytime = NS_LITERAL_STRING("150000"); //2min30sec
-  bs->UpdateMetaData(mCurrentAddress, mTrackName, mArtist, mAlbum, mTrackNumber, mTotalMediaCount, mPlaytime);
+#endif
+  mTrackName = aTitle;
+  mArtist = aArtist;
+  mAlbum = aAlbum;
+  mTrackNumber = aMediaNumber;
+  mTotalMediaCount = aTotalMediaCount;
+  mPlaytime = aPlaytime;
+
+#ifdef BTDEBUG
+  LOG("BluetoothA2dpManager::UpdateMetaData");
+  LOG("aTitle: %s",NS_ConvertUTF16toUTF8(mTrackName).get());
+  LOG("aArtist: %s",NS_ConvertUTF16toUTF8(mArtist).get());
+  LOG("aAlbum: %s",NS_ConvertUTF16toUTF8(mAlbum).get());
+  LOG("aMediaNumber: %s",NS_ConvertUTF16toUTF8(mTrackNumber).get());
+  LOG("aTotalMediaCount: %s",NS_ConvertUTF16toUTF8(aTotalMediaCount).get());
+  //hard code to test
+  mCurrentAddress = NS_LITERAL_STRING("/org/bluez/362/hci0/dev_00_80_98_09_0C_9F");
+  LOG("CurrentAddress: %s",NS_ConvertUTF16toUTF8(mCurrentAddress).get());
+#endif
+  if (!mCurrentAddress.IsEmpty()) {
+    bs->UpdateMetaData(mCurrentAddress, mTrackName, mArtist, mAlbum, mTrackNumber, mTotalMediaCount, mPlaytime, aRunnable);
+  }
 }
 
 void
@@ -269,6 +294,33 @@ BluetoothA2dpManager::UpdateNotification(const nsAString& aDeviceObjectPath,
   //2.Play status changed
   BluetoothService* bs = BluetoothService::Get();
   bs->UpdateNotification(aDeviceObjectPath, aEventid, aData);
+}
+
+void
+BluetoothA2dpManager::HandleCallStateChanged(uint16_t aCallState)
+{
+  switch (aCallState) {
+    //PHONE_STATE RINGING or OFFHOOK
+    case nsIRadioInterfaceLayer::CALL_STATE_INCOMING:
+    case nsIRadioInterfaceLayer::CALL_STATE_CONNECTED:
+      //TODO: We shall disable AVRCP, and set SetParameters suspend
+      LOG("BluetoothA2dpManager: CALL_STATE_INCOMING/CALL_STATE_CONNECTED, disable AVRCP");
+      SetParameter(NS_LITERAL_STRING("A2dpSuspended=true"));
+      break;
+    //PHONE_STATE IDLE
+    case nsIRadioInterfaceLayer::CALL_STATE_DISCONNECTED:
+      //IDLE state, we shall do delay resuming sink, there are many chipsets on
+      //Bluetooth headsets cannot handle A2DP sink resuming stream too fast,
+      //while SCO state is in disconnecting
+      LOG("BluetoothA2dpManager: CALL_STATE_DISCONNECTED, delay resume sink");
+      SetParameter(NS_LITERAL_STRING("A2dpSuspended=false"));
+      break;
+    case nsIRadioInterfaceLayer::CALL_STATE_DIALING:
+    case nsIRadioInterfaceLayer::CALL_STATE_ALERTING:
+      break;
+    default:
+      break;
+  }
 }
 
 void

@@ -103,12 +103,12 @@ static const unsigned long kKeyMapping[] = {
     NS_VK_CONTEXT_MENU,
     0, // NOTIFICATION
     NS_VK_F5, // SEARCH
-    NS_VK_U, // MEDIA_PLAY_PAUSE
-    NS_VK_V, // MEDIA_STOP
-    NS_VK_W, // MEDIA_NEXT
-    NS_VK_X, // MEDIA_PREVIOUS
-    NS_VK_Y, // MEDIA_REWIND
-    NS_VK_Z, // MEDIA_FAST_FORWARD
+    NS_VK_F17, // MEDIA_PLAY_PAUSE
+    NS_VK_F18, // MEDIA_STOP
+    NS_VK_F19, // MEDIA_NEXT
+    NS_VK_F20, // MEDIA_PREVIOUS
+    NS_VK_F21, // MEDIA_REWIND
+    NS_VK_F22, // MEDIA_FAST_FORWARD
     0, // MUTE
     0, // PAGE_UP
     0, // PAGE_DOWN

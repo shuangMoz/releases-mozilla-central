@@ -358,22 +358,22 @@ var shell = {
       case evt.DOM_VK_F16: // media pause button
         type = 'media-pause-button';
         break;
-      case evt.DOM_VK_U: // media play/pause button
+      case evt.DOM_VK_F17: // media play/pause button
         type = 'media-play-pause-button';
         break;
-      case evt.DOM_VK_V: // media stop button
+      case evt.DOM_VK_F18: // media stop button
         type = 'media-stop-button';
         break;
-      case evt.DOM_VK_W: // media forward button
+      case evt.DOM_VK_F19: // media forward button
         type = 'media-forward-button';
         break;
-      case evt.DOM_VK_X: // media backward button
+      case evt.DOM_VK_F20: // media backward button
         type = 'media-backward-button';
         break;
-      case evt.DOM_VK_Y: // media rewind button
+      case evt.DOM_VK_F21: // media rewind button
         type = 'media-rewind-button';
         break;
-      case evt.DOM_VK_Z: // media fastforward button
+      case evt.DOM_VK_F22: // media fastforward button
         type = 'media-fastforward-button';
         break;
       default:                      // Anything else is a real key
@@ -404,8 +404,7 @@ var shell = {
       gSystemMessenger.broadcastMessage('headset-button', type);
       return;
     }
-    if (((evt.keyCode >= evt.DOM_VK_U && evt.keyCode <= evt.DOM_VK_Z) ||
-         (evt.keyCode >= evt.DOM_VK_F15 && evt.keyCode <= evt.DOM_VK_F16))
+    if ((evt.keyCode >= evt.DOM_VK_F15 && evt.keyCode <= evt.DOM_VK_F22)
          && type !== this.lastHardwareButtonEventType) {
       this.lastHardwareButtonEventType = type;
       gSystemMessenger.broadcastMessage('media-button', type);

@@ -66,6 +66,7 @@ private:
   nsresult PairUnpair(bool aPair,
                       nsIDOMBluetoothDevice* aDevice,
                       nsIDOMDOMRequest** aRequest);
+
   
   nsString mAddress;
   nsString mName;
