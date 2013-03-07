@@ -831,18 +831,17 @@ BluetoothAdapter::SendMetaData(const nsAString& aDeviceAddress,
                                  const JS::Value& aValue, nsIDOMDOMRequest** aRequest)
 {
   JSContext* cx = nsContentUtils::GetSafeJSContext();
-  AvrcpMetaDataInfo metainfo;
+  BluetoothAvrcpMetaDataInfo metainfo;
   metainfo.Init(cx, &aValue);
 #ifdef DBG
   LOG("SendPlayStatus");
   LOG("Song title: %s", NS_ConvertUTF16toUTF8(metainfo.title).get());
   LOG("Song artist: %s", NS_ConvertUTF16toUTF8(metainfo.artist).get());
   LOG("Song album: %s", NS_ConvertUTF16toUTF8(metainfo.album).get());
-  LOG("Song currentTime: %s", NS_ConvertUTF16toUTF8(metainfo.currentTime).get());
   LOG("Song duration: %s", NS_ConvertUTF16toUTF8(metainfo.duration).get());
   LOG("Song total track: %s", NS_ConvertUTF16toUTF8(metainfo.totalTracks).get());
   LOG("Song track no: %s", NS_ConvertUTF16toUTF8(metainfo.trackNumber).get());
-  LOG("Song track no: %s", NS_ConvertUTF16toUTF8(metainfo.isPlaying).get());
+  LOG("isPlaying: %s", NS_ConvertUTF16toUTF8(metainfo.isPlaying).get());
 #endif
   nsCOMPtr<nsIDOMRequestService> rs = do_GetService("@mozilla.org/dom/dom-request-service;1");
   if (!rs) {
@@ -870,7 +869,7 @@ BluetoothAdapter::SendMetaData(const nsAString& aDeviceAddress,
                        metainfo.album,
                        metainfo.trackNumber,
                        metainfo.totalTracks,
-                       metainfo.currentTime,
+                       metainfo.duration,
                        result);
   return NS_OK;
 }

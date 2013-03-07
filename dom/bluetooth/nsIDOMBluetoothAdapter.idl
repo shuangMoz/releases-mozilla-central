@@ -75,26 +75,41 @@ interface nsIDOMBluetoothAdapter : nsIDOMEventTarget
   [implicit_jscontext] attribute jsval onauthorize;
   [implicit_jscontext] attribute jsval oncancel;
 };
+
 /**
- **This property reflects AVRCP 1.3 Metadata, Music application pass these track
- ** information to Bluetooth
-*/
-dictionary AvrcpMetaDataInfo : EventInit
+ * This property reflects AVRCP 1.3 Metadata, Music application pass these track
+ * information to Bluetooth. See AVRCP 1.3 Spec.
+ * Appendix E: List of Media Attributes
+ * title: Title of the media
+ * artist: Name of the artist
+ * album: Name of the album
+ * trackNumber: Number of the media (ex. Track number of the CD)
+ * totalTracks: Total number of the media (ex. Total track number of the CD)
+ * duration:Playing time in millisecond
+ * Genre (not implemented)
+ */
+dictionary BluetoothAvrcpMetaDataInfo : EventInit
 {
     DOMString album;
     DOMString artist;
     DOMString title;
     DOMString isPlaying;
-    DOMString currentTime;
     DOMString duration;
     DOMString trackNumber;
     DOMString totalTracks;
-    // - metadata.album
-    // - metadata.artist
-    // - metadata.title
-    // - metadata.isPlaying
-    // - metadata.currentTime
-    // - metadata.duration
-    // - metadata.trackNumber
-    // - metadata.totalTracks
+};
+
+/**
+ * This property reflects AVRCP 1.3 PlayStatus, Music application pass these track
+ * information to Bluetooth. See AVRCP 1.3 Spec.
+ *
+ * length: The total length of the playing song in milliseconds
+ * position: The current position of the playing in milliseconds elapsed
+ * playStatus: Current Status of playing
+ */
+dictionary BluetoothAvrcpPlayStatusInfo : EventInit
+{
+    DOMString length;
+    DOMString position;
+    DOMString playStatus;
 };
