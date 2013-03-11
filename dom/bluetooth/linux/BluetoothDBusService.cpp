@@ -516,6 +516,16 @@ AgentEventFilter(DBusConnection *conn, DBusMessage *msg, void *data)
 
       v = parameters;
     }
+    // For A2DP, we directly allow incoming a2dp connection, to improve Bluetooth
+    // security, it is supposed to have "Authorization" dialog.
+    DBusMessage *reply = dbus_message_new_method_return(msg);
+    if (!reply) {
+      errorStr.AssignLiteral("Memory can't be allocated for the message.");
+    } else {
+      dbus_connection_send(conn, reply, NULL);
+      dbus_message_unref(reply);
+    }
+
   } else if (dbus_message_is_method_call(msg, DBUS_AGENT_IFACE, "RequestConfirmation")) {
     // This method gets called when the service daemon needs to confirm a passkey for
     // an authentication.
@@ -1517,8 +1527,8 @@ EventFilter(DBusConnection* aConn, DBusMessage* aMsg, void* aData)
         //TODO:
         //We need to handle Sink property change and state change event,
         //move to BluetoothA2dpManager.
-        //bs->HandleSinkPropertyChange(address, currentState);
         nsString address = GetAddressFromObjectPath(signalPath);
+        bs->HandleSinkPropertyChange(address, currentState);
         // transfer signal to BluetoothService
         signalName = NS_LITERAL_STRING("A2dpConnStatusChanged");
         signalPath = NS_LITERAL_STRING(LOCAL_AGENT_PATH);
@@ -2435,7 +2445,6 @@ BluetoothDBusService::SetAuthorizationInternal(const nsAString& aDeviceAddress,
   nsString errorStr;
   BluetoothValue v = true;
   DBusMessage *msg;
-
   if (!sAuthorizeReqTable.Get(aDeviceAddress, &msg)) {
     LOG("%s: Couldn't get original request message.", __FUNCTION__);
     errorStr.AssignLiteral("Couldn't get original request message.");

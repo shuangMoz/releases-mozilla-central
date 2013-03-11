@@ -128,6 +128,14 @@ BluetoothA2dpManager::ReceiveSocketData(mozilla::ipc::UnixSocketRawData* aMessag
   MOZ_NOT_REACHED("This should never be called!");
 }
 
+static void
+RouteA2dpAudioPath()
+{
+  SetParameter(NS_LITERAL_STRING("bluetooth_enabled=true"));
+  SetParameter(NS_LITERAL_STRING("A2dpSuspended=false"));
+  android::AudioSystem::setForceUse((audio_policy_force_use_t)1, (audio_policy_forced_cfg_t)0);
+}
+
 void
 BluetoothA2dpManager::HandleSinkPropertyChange(const nsAString& aDeviceObjectPath,
                          const nsAString& aNewState)
@@ -148,6 +156,13 @@ BluetoothA2dpManager::HandleSinkPropertyChange(const nsAString& aDeviceObjectPat
   // 6. "connected" -> "disconnected"
   // 7. "playing" -> "disconnected"
   //     Disconnected from the remote device
+
+  if (aNewState.EqualsLiteral("connected")) {
+    LOG("A2DP connected!! Route path to a2dp");
+    LOG("Currnet device: %s",NS_ConvertUTF16toUTF8(mCurrentAddress).get());
+    RouteA2dpAudioPath();
+    //MakeA2dpDeviceAvailableNow(GetAddressFromObjectPath(mCurrentAddress));
+  }
   mCurrentSinkState = ConvertSinkStringToState(aNewState);
   //TODO: Need to check Sink state and do more stuffs
 }
@@ -172,9 +187,6 @@ BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
   LOG("Address: %s", NS_ConvertUTF16toUTF8(GetAddressFromObjectPath(mCurrentAddress)).get());
   LOG("Address: %s", NS_ConvertUTF16toUTF8(mCurrentAddress).get());
   mCurrentAddress = NS_LITERAL_STRING("/org/bluez/362/hci0/dev_00_80_98_09_0C_9F");
-  SetParameter(NS_LITERAL_STRING("bluetooth_enabled=true"));
-  SetParameter(NS_LITERAL_STRING("A2dpSuspended=false"));
-  android::AudioSystem::setForceUse((audio_policy_force_use_t)1, (audio_policy_forced_cfg_t)0);
   MakeA2dpDeviceAvailableNow(GetAddressFromObjectPath(mCurrentAddress));
   return true;
 }
@@ -188,6 +200,7 @@ BluetoothA2dpManager::Listen()
 
   return true;
 }
+
 
 void
 BluetoothA2dpManager::ResetAudio()
